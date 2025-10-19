@@ -4,7 +4,7 @@ An intelligent trading assistant app built with React Native and Expo that uses 
 
 ## Features
 
-- **AI-Powered Chart Analysis**: Upload trading chart images and get AI-powered analysis using OpenRouter with Google Gemma 3 27B
+- **AI-Powered Chart Analysis**: Upload trading chart images and get AI-powered analysis using OpenRouter with Google Gemma 2 9B
 - **Trading Signals**: Receive clear trading recommendations (HOLD, BUY LONG, BUY SHORT, SELL)
 - **Confidence Levels**: Get confidence percentages for each trading recommendation
 - **Multiple Timeframes**: Support for Scalping, Intraday, Swing, and Position trading
@@ -13,18 +13,22 @@ An intelligent trading assistant app built with React Native and Expo that uses 
 - **Market Analysis**: Comprehensive market condition analysis including support/resistance levels, trend analysis, and volume analysis
 - **Separate Results Page**: View detailed analysis results in a dedicated results tab
 - **Portrait Image Support**: Optimized for portrait chart screenshots with fullscreen display
-- **Custom Navbar**: Clean navigation between Analyze and Results tabs
+- **Custom Navbar**: Clean navigation between Analyze, Results, and History tabs
 - **Auto-Navigation**: Automatically navigates to results after successful analysis
 - **Search & Filter**: Search through indicators quickly with real-time filtering
 - **Clear All**: Easy way to clear all selected indicators at once
+- **Analysis History**: Cache and view all past analyses with images and details
+- **History Management**: Delete individual analyses or clear all history with confirmation
+- **Persistent Storage**: History is saved locally and persists between app sessions
 
 ## Tech Stack
 
 - **React Native** with **Expo**
 - **TypeScript** for type safety
-- **OpenRouter with Google Gemma 3 27B** for chart analysis
+- **OpenRouter with Google Gemma 2 9B** for chart analysis
 - **Expo Router** for navigation
 - **Expo Image Picker** for chart uploads
+- **AsyncStorage** for persistent local data storage
 
 ## Setup
 

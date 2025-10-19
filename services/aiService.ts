@@ -1,4 +1,6 @@
-const OPENROUTER_API_KEY = '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';
+import Constants from 'expo-constants';
+
+const OPENROUTER_API_KEY = Constants.expoConfig?.extra?.openrouterApiKey || process.env.OPENROUTER_API_KEY;
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 export interface TradingSignal {
@@ -29,87 +31,110 @@ class AIService {
     selectedIndicators: string[],
     symbol?: string
   ): Promise<ChartAnalysis> {
-    try {
-      console.log('AI Service: Starting chart analysis with OpenRouter...');
-      console.log('AI Service: API Key present:', !!OPENROUTER_API_KEY);
-      console.log('AI Service: Image base64 length:', imageBase64.length);
-      console.log('AI Service: Timeframe:', timeframe);
-      console.log('AI Service: Indicators:', selectedIndicators);
+    const models = [
+      "qwen/qwen2.5-vl-32b-instruct:free",
+      "google/gemini-2.5-flash-preview-09-2025",
 
-      const prompt = this.buildAnalysisPrompt(timeframe, selectedIndicators, symbol);
-      console.log('AI Service: Prompt built, length:', prompt.length);
+    ];
 
-      // Prepare the request body for OpenRouter
-      const requestBody = {
-        model: "google/gemma-3-27b-it:free",
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: prompt
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/png;base64,${imageBase64}`
+    for (let i = 0; i < models.length; i++) {
+      const model = models[i];
+      try {
+        console.log(`AI Service: Trying model ${i + 1}/${models.length}: ${model}`);
+        
+        const prompt = this.buildAnalysisPrompt(timeframe, selectedIndicators, symbol);
+        console.log('AI Service: Prompt built, length:', prompt.length);
+
+        // Prepare the request body for OpenRouter
+        const requestBody = {
+          model: model,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: prompt
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: `data:image/png;base64,${imageBase64}`
+                  }
                 }
-              }
-            ]
+              ]
+            }
+          ],
+          max_tokens: 2000,
+          temperature: 0.7
+        };
+
+        console.log('AI Service: Calling OpenRouter API...');
+        
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('API call timeout after 30 seconds')), 30000);
+        });
+        
+        const apiPromise = fetch(OPENROUTER_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'HTTP-Referer': 'https://aitrade.app',
+            'X-Title': 'AI Trading Assistant',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        const response = await Promise.race([apiPromise, timeoutPromise]) as Response;
+        console.log(`AI Service: API call successful with ${model}, status:`, response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`AI Service: API error with ${model}:`, errorText);
+          
+          // If this is the last model, throw the error
+          if (i === models.length - 1) {
+            throw new Error(`API request failed with status ${response.status}: ${errorText}`);
           }
-        ],
-        max_tokens: 2000,
-        temperature: 0.7
-      };
+          // Otherwise, try the next model
+          continue;
+        }
 
-      console.log('AI Service: Calling OpenRouter API...');
-      
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('API call timeout after 30 seconds')), 30000);
-      });
-      
-      const apiPromise = fetch(OPENROUTER_API_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-          'HTTP-Referer': 'https://aitrade.app',
-          'X-Title': 'AI Trading Assistant',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
+        const data = await response.json();
+        console.log('AI Service: Response received');
+        
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+          console.error('AI Service: Invalid response structure:', data);
+          if (i === models.length - 1) {
+            throw new Error('Invalid response from API');
+          }
+          continue;
+        }
 
-      const response = await Promise.race([apiPromise, timeoutPromise]) as Response;
-      console.log('AI Service: API call successful, status:', response.status);
+        const text = data.choices[0].message.content;
+        console.log('AI Service: Response text length:', text.length);
+        console.log('AI Service: Response preview:', text.substring(0, 200));
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('AI Service: API error response:', errorText);
-        throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+        const parsed = this.parseAIResponse(text);
+        console.log('AI Service: Response parsed successfully');
+        return parsed;
+      } catch (error) {
+        console.error(`AI Service: Error with model ${model}:`, error);
+        
+        // If this is the last model, throw the error
+        if (i === models.length - 1) {
+          console.error('AI Service: All models failed');
+          throw new Error('Failed to analyze chart. Please try again.');
+        }
+        // Otherwise, try the next model
+        continue;
       }
-
-      const data = await response.json();
-      console.log('AI Service: Response received');
-      
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        console.error('AI Service: Invalid response structure:', data);
-        throw new Error('Invalid response from API');
-      }
-
-      const text = data.choices[0].message.content;
-      console.log('AI Service: Response text length:', text.length);
-      console.log('AI Service: Response preview:', text.substring(0, 200));
-
-      const parsed = this.parseAIResponse(text);
-      console.log('AI Service: Response parsed successfully');
-      return parsed;
-    } catch (error) {
-      console.error('AI Service: Error analyzing chart:', error);
-      console.error('AI Service: Error details:', JSON.stringify(error, null, 2));
-      throw new Error('Failed to analyze chart. Please try again.');
     }
+    
+    // This should never be reached, but just in case
+    throw new Error('Failed to analyze chart. Please try again.');
   }
 
   private buildAnalysisPrompt(
@@ -199,45 +224,54 @@ Return only the JSON response, no additional text.
   }
 
   async testAPI(): Promise<boolean> {
-    try {
-      console.log('AI Service: Testing OpenRouter API key...');
-      
-      const requestBody = {
-        model: "google/gemma-3-27b-it:free",
-        messages: [
-          {
-            role: "user",
-            content: "Hello, respond with 'API working'"
-          }
-        ],
-        max_tokens: 50,
-        temperature: 0.1
-      };
+    const models = [
+      "google/gemma-2-9b-it:free",
+      "microsoft/phi-3-mini-128k-instruct:free",
+      "meta-llama/llama-3.2-3b-instruct:free"
+    ];
 
-      const response = await fetch(OPENROUTER_API_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-          'HTTP-Referer': 'https://aitrade.app',
-          'X-Title': 'AI Trading Assistant',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
+    for (const model of models) {
+      try {
+        console.log(`AI Service: Testing API with model: ${model}`);
+        
+        const requestBody = {
+          model: model,
+          messages: [
+            {
+              role: "user",
+              content: "Hello, respond with 'API working'"
+            }
+          ],
+          max_tokens: 50,
+          temperature: 0.1
+        };
 
-      if (!response.ok) {
-        console.error('AI Service: API test failed with status:', response.status);
-        return false;
+        const response = await fetch(OPENROUTER_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'HTTP-Referer': 'https://aitrade.app',
+            'X-Title': 'AI Trading Assistant',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.choices[0].message.content;
+          console.log(`AI Service: Test API successful with ${model}:`, text);
+          return true;
+        } else {
+          console.error(`AI Service: Test API failed with ${model}, status:`, response.status);
+        }
+      } catch (error) {
+        console.error(`AI Service: Test API error with ${model}:`, error);
       }
-
-      const data = await response.json();
-      const text = data.choices[0].message.content;
-      console.log('AI Service: API test response:', text);
-      return text.includes('API working') || text.length > 0;
-    } catch (error) {
-      console.error('AI Service: API test failed:', error);
-      return false;
     }
+    
+    console.error('AI Service: All test models failed');
+    return false;
   }
 
   async getMarketInsight(symbol: string): Promise<string> {
@@ -254,7 +288,7 @@ Keep it concise and actionable.
       `;
 
       const requestBody = {
-        model: "google/gemma-3-27b-it:free",
+        model: "google/gemma-2-9b-it:free",
         messages: [
           {
             role: "user",

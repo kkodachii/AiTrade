@@ -19,7 +19,11 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.kkodachi.AiTrade"
     },
     "web": {
       "output": "static",
@@ -49,6 +53,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "openrouterApiKey": "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",
+      "router": {},
+      "eas": {
+        "projectId": "100af91d-07b0-458d-a2b5-d38a417fc449"
+      }
     }
   }
 }

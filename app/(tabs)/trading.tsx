@@ -5,6 +5,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Navbar } from '@/components/ui/navbar';
 import { Colors } from '@/constants/theme';
 import { useAnalysis } from '@/contexts/AnalysisContext';
+import { useHistory } from '@/contexts/HistoryContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import AIService from '@/services/aiService';
 import * as ImagePicker from 'expo-image-picker';
@@ -57,6 +58,7 @@ const TIMEFRAMES: { label: string; value: Timeframe }[] = [
 export default function TradingScreen() {
   const colorScheme = useColorScheme();
   const { setAnalysis, isLoading, setIsLoading } = useAnalysis();
+  const { addToHistory } = useHistory();
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>('INTRADAY');
@@ -107,6 +109,12 @@ export default function TradingScreen() {
       console.log('AI analysis result:', result);
       setAnalysis(result);
       
+      // Add to history before clearing image
+      addToHistory(result, selectedImage, selectedTimeframe, selectedIndicators);
+      
+      // Clear the image after successful analysis to prevent re-analysis issues
+      setSelectedImage(null);
+      
       // Navigate to results after successful analysis
       setTimeout(() => {
         router.push('/(tabs)/results');
@@ -125,6 +133,8 @@ export default function TradingScreen() {
       <Navbar activeTab="trading" onTabChange={(tab) => {
         if (tab === 'results') {
           router.push('/(tabs)/results');
+        } else if (tab === 'history') {
+          router.push('/(tabs)/history');
         }
       }} />
       <ScrollView style={styles.scrollContainer}>

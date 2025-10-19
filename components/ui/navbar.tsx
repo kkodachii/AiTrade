@@ -9,8 +9,8 @@ import {
 } from 'react-native';
 
 interface NavbarProps {
-  activeTab: 'trading' | 'results';
-  onTabChange: (tab: 'trading' | 'results') => void;
+  activeTab: 'trading' | 'results' | 'history';
+  onTabChange: (tab: 'trading' | 'results' | 'history') => void;
 }
 
 export function Navbar({ activeTab, onTabChange }: NavbarProps) {
@@ -70,6 +70,32 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
           }
         ]}>
           Results
+        </ThemedText>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.tab,
+          {
+            backgroundColor: activeTab === 'history' 
+              ? Colors[colorScheme ?? 'light'].tint 
+              : 'transparent',
+            borderBottomColor: activeTab === 'history' 
+              ? Colors[colorScheme ?? 'light'].tint 
+              : 'transparent'
+          }
+        ]}
+        onPress={() => onTabChange('history')}
+      >
+        <ThemedText style={[
+          styles.tabText,
+          {
+            color: activeTab === 'history' 
+              ? '#FFFFFF' 
+              : Colors[colorScheme ?? 'light'].text
+          }
+        ]}>
+          History
         </ThemedText>
       </TouchableOpacity>
     </View>

@@ -42,8 +42,13 @@ export default function ResultsScreen() {
     return (
       <View style={styles.container}>
         <Navbar activeTab="results" onTabChange={(tab) => {
+          console.log('Results (Loading): Tab change requested:', tab);
           if (tab === 'trading') {
+            console.log('Results (Loading): Navigating to trading');
             router.push('/(tabs)/trading');
+          } else if (tab === 'history') {
+            console.log('Results (Loading): Navigating to history');
+            router.push('/(tabs)/history');
           }
         }} />
         <ThemedView style={styles.loadingContainer}>
@@ -58,8 +63,13 @@ export default function ResultsScreen() {
     return (
       <View style={styles.container}>
         <Navbar activeTab="results" onTabChange={(tab) => {
+          console.log('Results (No Analysis): Tab change requested:', tab);
           if (tab === 'trading') {
+            console.log('Results (No Analysis): Navigating to trading');
             router.push('/(tabs)/trading');
+          } else if (tab === 'history') {
+            console.log('Results (No Analysis): Navigating to history');
+            router.push('/(tabs)/history');
           }
         }} />
         <ThemedView style={styles.emptyContainer}>
@@ -77,8 +87,13 @@ export default function ResultsScreen() {
   return (
     <View style={styles.container}>
       <Navbar activeTab="results" onTabChange={(tab) => {
+        console.log('Results (With Analysis): Tab change requested:', tab);
         if (tab === 'trading') {
+          console.log('Results (With Analysis): Navigating to trading');
           router.push('/(tabs)/trading');
+        } else if (tab === 'history') {
+          console.log('Results (With Analysis): Navigating to history');
+          router.push('/(tabs)/history');
         }
       }} />
       <ScrollView style={styles.scrollContainer}>

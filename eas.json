@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 16.23.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "OPENROUTER_API_KEY": "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"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "OPENROUTER_API_KEY": "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"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "OPENROUTER_API_KEY": "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"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
