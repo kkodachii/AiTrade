@@ -8,16 +8,18 @@ import { TradingSignal } from '@/services/aiService';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ResultsScreen() {
   const colorScheme = useColorScheme();
   const { analysis, isLoading } = useAnalysis();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const getActionColor = (action: TradingSignal['action']) => {
     switch (action) {
@@ -40,7 +42,7 @@ export default function ResultsScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <Navbar activeTab="results" onTabChange={(tab) => {
           console.log('Results (Loading): Tab change requested:', tab);
           if (tab === 'trading') {
@@ -61,7 +63,7 @@ export default function ResultsScreen() {
 
   if (!analysis) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <Navbar activeTab="results" onTabChange={(tab) => {
           console.log('Results (No Analysis): Tab change requested:', tab);
           if (tab === 'trading') {
@@ -85,7 +87,7 @@ export default function ResultsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <Navbar activeTab="results" onTabChange={(tab) => {
         console.log('Results (With Analysis): Tab change requested:', tab);
         if (tab === 'trading') {
@@ -96,7 +98,7 @@ export default function ResultsScreen() {
           router.push('/(tabs)/history');
         }
       }} />
-      <ScrollView style={styles.scrollContainer}>
+      <ScrollView style={[styles.scrollContainer, { paddingBottom: insets.bottom }]}>
         <ThemedView style={styles.content}>
         {/* Header */}
         <ThemedView style={styles.header}>

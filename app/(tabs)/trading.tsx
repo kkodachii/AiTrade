@@ -8,9 +8,10 @@ import { useAnalysis } from '@/contexts/AnalysisContext';
 import { useHistory } from '@/contexts/HistoryContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import AIService from '@/services/aiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -20,6 +21,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 type Timeframe = 'SCALPING' | 'INTRADAY' | 'SWING' | 'POSITION';
@@ -55,14 +57,59 @@ const TIMEFRAMES: { label: string; value: Timeframe }[] = [
   { label: 'Position (weeks-months)', value: 'POSITION' }
 ];
 
+const STORAGE_KEYS = {
+  TIMEFRAME: 'trading_timeframe',
+  INDICATORS: 'trading_indicators',
+};
+
 export default function TradingScreen() {
   const colorScheme = useColorScheme();
   const { setAnalysis, isLoading, setIsLoading } = useAnalysis();
   const { addToHistory } = useHistory();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>('INTRADAY');
   const [selectedIndicators, setSelectedIndicators] = useState<Indicator[]>(['RSI', 'MACD']);
+
+  // Load cached values on component mount
+  useEffect(() => {
+    loadCachedSettings();
+  }, []);
+
+  // Save settings whenever they change
+  useEffect(() => {
+    saveCachedSettings();
+  }, [selectedTimeframe, selectedIndicators, saveCachedSettings]);
+
+  const loadCachedSettings = async () => {
+    try {
+      const [cachedTimeframe, cachedIndicators] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEYS.TIMEFRAME),
+        AsyncStorage.getItem(STORAGE_KEYS.INDICATORS),
+      ]);
+
+      if (cachedTimeframe) {
+        setSelectedTimeframe(cachedTimeframe as Timeframe);
+      }
+      if (cachedIndicators) {
+        setSelectedIndicators(JSON.parse(cachedIndicators));
+      }
+    } catch (error) {
+      console.error('Error loading cached settings:', error);
+    }
+  };
+
+  const saveCachedSettings = useCallback(async () => {
+    try {
+      await Promise.all([
+        AsyncStorage.setItem(STORAGE_KEYS.TIMEFRAME, selectedTimeframe),
+        AsyncStorage.setItem(STORAGE_KEYS.INDICATORS, JSON.stringify(selectedIndicators)),
+      ]);
+    } catch (error) {
+      console.error('Error saving cached settings:', error);
+    }
+  }, [selectedTimeframe, selectedIndicators]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -129,7 +176,7 @@ export default function TradingScreen() {
 
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <Navbar activeTab="trading" onTabChange={(tab) => {
         if (tab === 'results') {
           router.push('/(tabs)/results');
@@ -137,7 +184,7 @@ export default function TradingScreen() {
           router.push('/(tabs)/history');
         }
       }} />
-      <ScrollView style={styles.scrollContainer}>
+      <ScrollView style={[styles.scrollContainer, { paddingBottom: insets.bottom }]}>
         <ThemedView style={styles.content}>
         {/* Header */}
         <ThemedView style={styles.header}>

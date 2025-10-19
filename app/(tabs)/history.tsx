@@ -18,11 +18,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HistoryScreen() {
   const colorScheme = useColorScheme();
   const { history, removeFromHistory, clearHistory, isLoading } = useHistory();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [showClearModal, setShowClearModal] = useState(false);
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<any>(null);
 
@@ -128,7 +130,7 @@ export default function HistoryScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <Navbar activeTab="history" onTabChange={(tab) => {
           console.log('History (Loading): Tab change requested:', tab);
           if (tab === 'trading') {
@@ -148,7 +150,7 @@ export default function HistoryScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <Navbar activeTab="history" onTabChange={(tab) => {
         console.log('History (Main): Tab change requested:', tab);
         if (tab === 'trading') {
@@ -190,7 +192,7 @@ export default function HistoryScreen() {
           data={history}
           keyExtractor={(item) => item.id}
           renderItem={renderHistoryItem}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={[styles.listContainer, { paddingBottom: insets.bottom }]}
           showsVerticalScrollIndicator={false}
         />
       )}
